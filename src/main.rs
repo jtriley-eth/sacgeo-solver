@@ -5,6 +5,7 @@ use std::env;
 use vm::U256;
 
 fn main() {
+    // return _check_all();
     let args: Vec<String> = env::args().collect();
 
     let inputs = match sanitize(&args) {
@@ -54,14 +55,31 @@ fn sanitize(args: &[String]) -> Result<smallvec::SmallVec<[U256; 8]>, String> {
     ])
 }
 
-// fn check_all() {
-//     const PERMUTATIONS: usize = 262_144;
-//     let mut inputs = vm::Inputs::new();
+fn _check_all() {
+    use std::io::Write;
+    const PERMUTATIONS: usize = 262_144;
+    let mut inputs = vm::Inputs::new();
+    let mut lock = std::io::stdout().lock();
 
-//     for _ in 0..PERMUTATIONS {
-//         if solver::solve(inputs.inner()).is_some() {
-//             println!("no solution found: {:?}", inputs);
-//         }
-//         inputs.increment();
-//     }
-// }
+    for _ in 0..PERMUTATIONS {
+        let input = U256::from(
+            inputs
+                .inner()
+                .iter()
+                .enumerate()
+                .fold(0, |acc, (i, input)| acc | input.as_limbs()[0] << (8 * i)),
+        );
+
+        let solution = solver::solve(inputs.inner())
+            .unwrap()
+            .opcodes
+            .iter()
+            .enumerate()
+            .fold(U256::ZERO, |acc, (i, opcode)| {
+                acc | U256::from(opcode.to_u8()) << (248 - 8 * i)
+            });
+
+        write!(lock, "{:x}{:x}\n", input, solution).unwrap();
+        inputs.increment();
+    }
+}

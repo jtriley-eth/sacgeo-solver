@@ -38,7 +38,9 @@ pub fn solve(inputs: &SmallVec<[U256; 8]>) -> Option<Solution> {
             let mut opcodes: SmallVec<[u8; 9]> = smallvec![1, 1, 1, 1, 1, 1, 1, 1, 0];
             opcodes[swap_position] = swap_n as u8;
             for iterations in 0..=MAX_ITER {
-                if primes.contains(&vm::execute(&opcodes, inputs).unwrap()) {
+                let res = vm::execute(&opcodes, inputs).unwrap();
+                if primes.contains(&res) {
+                    // println!("found solution: {:?}", res);
                     return Some(Solution {
                         opcodes: opcodes
                             .iter()
